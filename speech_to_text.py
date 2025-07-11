@@ -30,15 +30,15 @@ def select_preferred_input_device():
         if dev['max_input_channels'] > 0:
             name = dev['name'].lower()
             if 'mic' in name or 'headset' in name:
-                print(f"Auto-selected input device: {dev['name']} (index {idx})")
+                print(f"Auto-selected input device: {dev['name']} (index {idx})", flush=True)
                 return idx
     # Fallback to system default input device
     default = sd.default.device[0]
     if default is not None and default >= 0:
-        print(f"Using default input device: {devices[default]['name']} (index {default})")
+        print(f"Using default input device: {devices[default]['name']} (index {default})", flush=True)
         return default
     # No suitable input device found
-    print("No suitable input device found!")
+    print("No suitable input device found!", flush=True)
     return None
 
 def realtime_transcribe(model):
@@ -46,12 +46,12 @@ def realtime_transcribe(model):
     recognizer = vosk.KaldiRecognizer(model, SAMPLE_RATE)
     device_index = select_preferred_input_device()
     if device_index is None:
-        print("ERROR: No audio input device available.")
+        print("ERROR: No audio input device available.", flush=True)
         return
     last_text = ""
     try:
         with sd.InputStream(samplerate=SAMPLE_RATE, channels=CHANNELS, dtype='int16', callback=callback, blocksize=8000, device=device_index):
-            print("Starting real-time transcription. Press Ctrl+C to stop.")
+            print("Starting real-time transcription. Press Ctrl+C to stop.", flush=True)
             while True:
                 try:
                     data = q.get(timeout=1)
@@ -61,26 +61,26 @@ def realtime_transcribe(model):
                     result = json.loads(recognizer.Result())
                     text = result.get('text', '')
                     if text and text != last_text:
-                        print(text)
+                        print(text, flush=True)
                         last_text = text
     except KeyboardInterrupt:
-        print("\nStopping transcription.")
+        print("\nStopping transcription.", flush=True)
         final_result = json.loads(recognizer.FinalResult())
-        print(f"Final Transcription: {final_result.get('text', '')}")
+        print(f"Final Transcription: {final_result.get('text', '')}", flush=True)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred: {e}", flush=True)
 
 # --- File-based Transcription ---
 def transcribe_from_file(model, audio_filename):
     """Transcribes an audio file using the Vosk model."""
     if not os.path.exists(audio_filename):
-        print(f"Audio file '{audio_filename}' not found.")
+        print(f"Audio file '{audio_filename}' not found.", flush=True)
         return
 
     recognizer = vosk.KaldiRecognizer(model, SAMPLE_RATE)
     with wave.open(audio_filename, "rb") as wf:
         if wf.getnchannels() != CHANNELS or wf.getsampwidth() != 2 or wf.getcomptype() != "NONE":
-            print("Audio file must be WAV format mono PCM.")
+            print("Audio file must be WAV format mono PCM.", flush=True)
             return
 
         while True:
@@ -90,7 +90,7 @@ def transcribe_from_file(model, audio_filename):
             recognizer.AcceptWaveform(data)
 
         result = json.loads(recognizer.FinalResult())
-        print(f"Transcription: {result['text']}")
+        print(f"Transcription: {result['text']}", flush=True)
 
 if __name__ == "__main__":
     print("[INFO] Starting Vosk Speech-to-Text Application...")
@@ -118,29 +118,29 @@ if __name__ == "__main__":
     model_path = os.path.join(MODELS_BASE_DIR, model_folder)
 
     if not os.path.exists(model_path):
-        print(f"Model path '{model_path}' not found. Please ensure the models are in the '{MODELS_BASE_DIR}' directory.")
+        print(f"Model path '{model_path}' not found. Please ensure the models are in the '{MODELS_BASE_DIR}' directory.", flush=True)
         exit()
 
-    print(f"[INFO] Loading model from: {model_path}")
+    print(f"[INFO] Loading model from: {model_path}", flush=True)
     try:
         model = vosk.Model(model_path)
     except Exception as e:
-        print(f"[ERROR] Failed to load model: {e}")
+        print(f"[ERROR] Failed to load model: {e}", flush=True)
         sys.exit(1)
 
     if args.mode == 'realtime':
-        print("[INFO] Starting real-time transcription mode...")
+        print("[INFO] Starting real-time transcription mode...", flush=True)
         try:
             realtime_transcribe(model)
         except Exception as e:
-            print(f"[ERROR] Real-time transcription failed: {e}")
+            print(f"[ERROR] Real-time transcription failed: {e}", flush=True)
     elif args.mode == 'file':
         if not args.input:
             parser.error("--input is required for 'file' mode.")
-        print(f"[INFO] Transcribing from file: {args.input}")
+        print(f"[INFO] Transcribing from file: {args.input}", flush=True)
         try:
             transcribe_from_file(model, args.input)
         except Exception as e:
-            print(f"[ERROR] File transcription failed: {e}")
+            print(f"[ERROR] File transcription failed: {e}", flush=True)
 
-    print("[INFO] Application completed.")
+    print("[INFO] Application completed.", flush=True)
