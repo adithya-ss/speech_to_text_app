@@ -1,0 +1,17 @@
+# --- Start ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.*venv
+*.zip
+*.tar.gz
+*.tar
+*.7z
+
+.vscode/
+
+vosk_speech_models/*
+
+# --- End ---
